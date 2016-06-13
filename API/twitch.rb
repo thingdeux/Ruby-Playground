@@ -1,21 +1,23 @@
 require 'json'
-require "net/http"
-require "uri"
+require "open-uri"
 
 module Twitch
-  class Factory
+  class TwitchFactory
+
     def initialize()
       @twitch_api_base_url = "https://api.twitch.tv/kraken/"
       @twitch_api_key = "blah"
     end
 
     def get_top_games
-      top_url = @twitch_api_base_url.join('games/top/')
-      response = JSON.parse('{"josh": 1}')
-      total_count = response["_total"]
+      final_hash = {}
+      raw_response = URI.parse(@twitch_api_base_url.concat('games/top/')).read
+      response = JSON.parse(raw_response)
+      final_hash["total"] = response["_total"]
+      get_top_game_counts(response["top"], final_hash)
     end
 
-    def get_top_game_counts(top_json_object)
+    def get_top_game_counts(top_json_object, passed_hash)
       # Expects a json parsed twitch top json object with the following structure
       # Returns a hash of game names to counts ... ex: {"Starcraft"=>12354}
       # "top": [
@@ -43,25 +45,18 @@ module Twitch
       # },
       # More Details found here: https://github.com/justintv/Twitch-API/blob/master/v3_resources/games.md
       if top_json_object.is_a?(Array)
-        hash_to_return = {}
         top_json_object.each do |twitch_game_object|
           viewers = twitch_game_object["viewers"]
-          # TODO: Exception here if key is missing? -- test
-          game_name = twitch_game_object["game"]["name"]
-          unless game_name.nil? {
-            hash_to_return[game_name] = viewers
-          }
+          game_name = twitch_game_object["game"]["name"] || ""
+          if game_name.length > 0
+            passed_hash[game_name] = viewers
           end
-
         end
       end
-
+      passed_hash
     end
 
     private :get_top_game_counts
-
-
-
 
   end
 end

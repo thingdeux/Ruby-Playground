@@ -1,7 +1,7 @@
 require 'json'
 
 module ITunes
-  class Factory
+  class ITunesFactory
     def initialize()
     end
   end
